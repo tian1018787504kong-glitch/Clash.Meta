@@ -103,9 +103,7 @@ func (f *Fallback) findAliveProxy(touch bool) C.Proxy {
 	proxies := f.GetProxies(touch)
 	for _, proxy := range proxies {
 		if len(f.selected) == 0 {
-			if proxy.AliveForTestUrl(f.testUrl) {
-				return proxy
-			}
+			continue
 		} else {
 			if proxy.Name() == f.selected {
 				if proxy.AliveForTestUrl(f.testUrl) {
@@ -114,6 +112,19 @@ func (f *Fallback) findAliveProxy(touch bool) C.Proxy {
 					f.selected = ""
 				}
 			}
+		}
+	}
+
+	candidateProxies := acadpathPreferredAliveProxies(f.Name(), proxies, f.testUrl)
+	for _, proxy := range candidateProxies {
+		if proxy.AliveForTestUrl(f.testUrl) {
+			return proxy
+		}
+	}
+
+	for _, proxy := range proxies {
+		if proxy.AliveForTestUrl(f.testUrl) {
+			return proxy
 		}
 	}
 

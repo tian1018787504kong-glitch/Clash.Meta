@@ -119,11 +119,13 @@ func (u *URLTest) fast(touch bool) C.Proxy {
 			}
 		}
 
+		candidateProxies := acadpathPreferredAliveProxies(u.Name(), proxies, u.testUrl)
 		fast := proxies[0]
-		minDelay := fast.LastDelayForTestUrl(u.testUrl)
+		minDelay := uint16(0)
+		foundAlive := false
 		fastNotExist := true
 
-		for _, proxy := range proxies[1:] {
+		for _, proxy := range candidateProxies {
 			if u.fastNode != nil && proxy.Name() == u.fastNode.Name() {
 				fastNotExist = false
 			}
@@ -133,13 +135,22 @@ func (u *URLTest) fast(touch bool) C.Proxy {
 			}
 
 			delay := proxy.LastDelayForTestUrl(u.testUrl)
+			if !foundAlive {
+				fast = proxy
+				minDelay = delay
+				foundAlive = true
+				continue
+			}
+
 			if delay < minDelay {
 				fast = proxy
 				minDelay = delay
 			}
-
 		}
 		// tolerance
+		if !foundAlive {
+			fast = proxies[0]
+		}
 		if u.fastNode == nil || fastNotExist || !u.fastNode.AliveForTestUrl(u.testUrl) || u.fastNode.LastDelayForTestUrl(u.testUrl) > fast.LastDelayForTestUrl(u.testUrl)+u.tolerance {
 			u.fastNode = fast
 		}
