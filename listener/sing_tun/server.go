@@ -661,6 +661,13 @@ func (l *Listener) Close() error {
 	if l.cDialerInterfaceFinder != nil {
 		dialer.DefaultInterfaceFinder.CompareAndSwap(l.cDialerInterfaceFinder, nil)
 	}
+
+	// Clean up routes before closing TUN interface
+	// This is a workaround for sing-tun not cleaning up routes on Windows
+	if l.options.AutoRoute {
+		cleanupRoutesForInterface(l.tunName)
+	}
+
 	return common.Close(
 		l.ruleUpdateCallbackCloser,
 		l.tunStack,
